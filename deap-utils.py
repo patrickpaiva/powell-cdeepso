@@ -3,13 +3,14 @@ import numpy as np
 from powell_cdeepso import c_deepso_powell_global_best_com_kmeans
 from deap import base, creator, tools, algorithms
 from functools import partial
+from functions import shifted_rosenbrock, schwefel_1_2
 
 def schwefel(particle):
     dimension = len(particle)
     return 418.9829 * dimension - np.sum(particle * np.sin(np.sqrt(np.abs(particle))))
 
 def deap_func(particle):
-  return schwefel(particle)
+  return schwefel_1_2(particle)
 
 # Função objetivo para o DEEPSO com pesos otimizados
 def evaluate_weights(weights, function, dimension, swarmSize, lowerBound, upperBound, max_iter=100):
@@ -22,27 +23,11 @@ def evaluate_weights(weights, function, dimension, swarmSize, lowerBound, upperB
 
     return best_fitness,
 
-# Configurar DEAP
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-creator.create("Individual", list, fitness=creator.FitnessMin)
-
-toolbox = base.Toolbox()
-toolbox.register("attr_float", np.random.uniform, 0, 1)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 6)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-toolbox.register("evaluate", partial(evaluate_weights, function=deap_func, dimension=30,
-                                     swarmSize=30, lowerBound=-500, upperBound=500))
-#toolbox.register("mate", tools.cxBlend, alpha=0.5)
-#toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
-
 def custom_crossover(ind1, ind2, alpha=0.5):
     for i in range(len(ind1)):
         ind1[i] = np.clip(ind1[i] * (1 - alpha) + ind2[i] * alpha, 0, 1)
         ind2[i] = np.clip(ind2[i] * (1 - alpha) + ind1[i] * alpha, 0, 1)
     return ind1, ind2
-
-toolbox.register("mate", custom_crossover, alpha=0.5)
 
 def custom_mutation(individual, indpb):
     for i in range(len(individual)):
@@ -53,19 +38,40 @@ def custom_mutation(individual, indpb):
                 individual[i] = np.clip(np.random.normal(individual[i], 0.2), 0, 1)
     return individual,
 
-toolbox.register("mutate", custom_mutation, indpb=0.2)
-toolbox.register("select", tools.selTournament, tournsize=3)
+def main():
+    # Configurar DEAP
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMin)
 
-population = toolbox.population(n=50)
-ngen = 20
-cxpb = 0.5
-mutpb = 0.2
+    toolbox = base.Toolbox()
+    toolbox.register("attr_float", np.random.uniform, 0, 1)
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 6)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-# Executar o algoritmo genético
-result = algorithms.eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=True)
+    toolbox.register("evaluate", partial(evaluate_weights, function=deap_func, dimension=30,
+                                        swarmSize=30, lowerBound=-100, upperBound=100))
+    #toolbox.register("mate", tools.cxBlend, alpha=0.5)
+    #toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
 
-# Melhor solução encontrada
-best_individual = tools.selBest(population, 1)[0]
-best_type = ['sgpb', 'sg', 'pb'][int(round(best_individual[5] * 2))]
-print('Melhores pesos encontrados:', best_individual)
-print('Melhor valor de type encontrado:', best_type)
+    toolbox.register("mate", custom_crossover, alpha=0.5)
+
+    toolbox.register("mutate", custom_mutation, indpb=0.2)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+
+    population = toolbox.population(n=50)
+    ngen = 20
+    cxpb = 0.5
+    mutpb = 0.2
+
+    # Executar o algoritmo genético
+    print("Iniciando...")
+    result = algorithms.eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=True)
+
+    # Melhor solução encontrada
+    best_individual = tools.selBest(population, 1)[0]
+    best_type = ['sgpb', 'sg', 'pb'][int(round(best_individual[5] * 2))]
+    print('Melhores pesos encontrados:', best_individual)
+    print('Melhor valor de type encontrado:', best_type)
+
+if __name__ == "__main__":
+    main()

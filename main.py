@@ -1,9 +1,10 @@
-from powell_cdeepso import c_deepso_powell_global_best_com_kmeans, c_deepso, c_deepso_powell_global_best_com_kmeans_v2
+from powell_cdeepso import c_deepso_powell_global_best_com_kmeans, c_deepso, c_deepso_powell_global_best_com_kmeans_v3
 from utils import calculate_statistics, print_statistics, perform_t_test
 from scipy.optimize import rosen
 import numpy as np
 import time
 from tqdm import tqdm
+from functions import shifted_rosenbrock, schwefel_1_2
 
 def schwefel(particle):
     dimension = len(particle)
@@ -28,7 +29,7 @@ def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi
     results_CDEEPSO = []
 
     for _ in tqdm(range(30), desc="Executando...", unit="iter"):
-        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO = c_deepso_powell_global_best_com_kmeans(function, dimension, swarm_size, lower_bound, upper_bound, dispersion_threshold, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
+        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO = c_deepso_powell_global_best_com_kmeans(function, dimension, swarm_size, lower_bound, upper_bound, dispersion_threshold, max_iter=max_iter, max_fun_evals=max_fun_evals, type='sg', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results_PCDEEPSO.append({
             'best_fitness': best_fitness_PCDEEPSO,
             'global_best': g_best_PCDEEPSO,
@@ -37,7 +38,7 @@ def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi
         best_fitnesses_PCDEEPSO = [res['best_fitness'] for res in results_PCDEEPSO]
         fun_evals_PCDEEPSO = [res['function_evals'] for res in results_PCDEEPSO]
 
-        best_fitness_CDEEPSO, g_best_CDEEPSO, _, _, _, function_evals_CDEEPSO = c_deepso_powell_global_best_com_kmeans_v2(function, dimension, swarm_size, lower_bound, upper_bound, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
+        best_fitness_CDEEPSO, g_best_CDEEPSO, _, _, _, function_evals_CDEEPSO = c_deepso(function, dimension, swarm_size, lower_bound, upper_bound, max_iter=max_iter, max_fun_evals=max_fun_evals, type='sg', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results_CDEEPSO.append({
             'best_fitness': best_fitness_CDEEPSO,
             'global_best': g_best_CDEEPSO,
@@ -59,26 +60,25 @@ def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi
     melhor_gb = melhor_execucao['global_best']
     teste = function(melhor_gb)
     print(f"\nProva do fitness: {teste}")
-
+#[0.5027513463314259, 0.4545571384949152, 0.09256640183471483, 0.3824297073660111, 0.3389945529796813, 0.6169364403996715]
 def main():
     inicio = time.time()
     print("Iniciando...")
-
     experimentacao(
-            function=schwefel, 
-            dimension=30, 
-            swarm_size=30, 
-            lower_bound=-500, 
-            upper_bound=500,
-            dispersion_threshold = 1200, 
-            wi = 0.7115679640086889, 
-            wa = 0.33431498083767774, 
-            wc = 0.6519128879895824, 
-            tcom= 0.5272319474395429, 
-            tmut= 0.7980253597223532, 
+            function=rosen, 
+            dimension=100, 
+            swarm_size=100, 
+            lower_bound=-2.048, 
+            upper_bound=2.048,
+            dispersion_threshold = 1e-1,
+            wi = 0.4019092098808389, 
+            wa = 0.3791940368874607, 
+            wc = 0.7539312405916303, 
+            tcom= 0.5819630448962767, 
+            tmut= 0.3, 
             max_v=1.01,
-            max_fun_evals=None,
-            max_iter=100)
+            max_fun_evals=100_000,
+            max_iter=None)
 
     fim = time.time()
     tempo_total = fim - inicio
@@ -89,7 +89,21 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+    # experimentacao(
+    #         function=schwefel_1_2, 
+    #         dimension=30, 
+    #         swarm_size=30, 
+    #         lower_bound=-100, 
+    #         upper_bound=100,
+    #         dispersion_threshold = 1e-3,
+    #         wi = 0.5027513463314259, 
+    #         wa = 0.4545571384949152, 
+    #         wc = 0.09256640183471483, 
+    #         tcom= 0.3824297073660111, 
+    #         tmut= 0.3389945529796813,
+    #         max_v=1.01,
+    #         max_fun_evals=100_000,
+    #         max_iter=None)
 
 # experimentacao(
 #         function=schwefel, 
@@ -122,3 +136,19 @@ if __name__ == "__main__":
 #         max_v=1.01,
 #         max_fun_evals=None,
 #         max_iter=100)
+
+    # experimentacao(
+    #         function=shifted_rosenbrock, 
+    #         dimension=30, 
+    #         swarm_size=30, 
+    #         lower_bound=-100, 
+    #         upper_bound=100,
+    #         dispersion_threshold = 5,
+    #         wi = 0.08213734020913432, 
+    #         wa = 0.5016145205887836, 
+    #         wc = 0.9484478878680539, 
+    #         tcom= 0.8307913864953265, 
+    #         tmut= 0.3285196359675192,
+    #         max_v=1.01,
+    #         max_fun_evals=100_000,
+    #         max_iter=None)
