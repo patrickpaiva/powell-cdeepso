@@ -124,9 +124,9 @@ def _minimize_scalar_bounded(func, bounds, global_max_fun, get_global_fun_calls,
         tol1 = sqrt_eps * np.abs(xf) + xatol / 3.0
         tol2 = 2.0 * tol1
 
-        global_fun_calls = get_global_fun_calls()
+        # global_fun_calls = get_global_fun_calls()
         # print(f"global_fun_calls: {global_fun_calls} global_max_fun: {global_max_fun}")
-        #if num >= maxfun or global_fun_calls >= global_max_fun:
+        # if num >= maxfun or global_fun_calls >= global_max_fun:
         if num >= maxfun:
             # print(f"parei o line com global_fun_calls: {global_fun_calls}")
             flag = 1

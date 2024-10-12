@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from functions import shifted_rosenbrock
+from functions import schwefel
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
@@ -51,17 +51,17 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
 for i in range(len(dimensions)):
     n = dimensions[i-1]    
     experimentacao_powell(
-            function=shifted_rosenbrock, 
+            function=schwefel, 
             dimension=n, 
             swarm_size=n, 
-            lower_bound=-100, 
-            upper_bound=100,
+            lower_bound=-500, 
+            upper_bound=500,
             dispersion_tol = 1e-4,
-            wi = 0.08213734020913432, 
-            wa = 0.5016145205887836, 
-            wc = 0.9484478878680539, 
-            tcom= 0.8307913864953265, 
-            tmut= 0.3285196359675192, 
+            wi = 0.7115679640086889, 
+            wa = 0.33431498083767774, 
+            wc = 0.6519128879895824, 
+            tcom= 0.5272319474395429, 
+            tmut= 0.7980253597223532,
             max_v=1.01,
             max_fun_evals=100_000,
             max_iter=None)
@@ -97,7 +97,6 @@ def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_b
         'Aval_Func_Media': function_evals_mean
     }]
     df_stats = pd.DataFrame(statistics)
-
     data_hora_atual = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     nome_arquivo = f"experimento_{function.__name__}_{dimension}_dimensoes_cdeepso_{data_hora_atual}.xlsx"
     with pd.ExcelWriter(nome_arquivo, engine='openpyxl') as writer:
@@ -105,19 +104,19 @@ def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_b
         df_stats.to_excel(writer, sheet_name='Estatisticas', index=False)
     
 
-# for i in range(len(dimensions)):
-#     n = dimensions[i-1]
-#     experimentacao_cdeepso(
-#         function=shifted_rosenbrock, 
-#         dimension=n, 
-#         swarm_size=n, 
-#         lower_bound=-100, 
-#         upper_bound=100, 
-#         wi = 0.08213734020913432, 
-#         wa = 0.5016145205887836, 
-#         wc = 0.9484478878680539, 
-#         tcom= 0.8307913864953265, 
-#         tmut= 0.3285196359675192,  
-#         max_v=1.01,
-#         max_fun_evals=100_000,
-#         max_iter=None)
+for i in range(len(dimensions)):
+    n = dimensions[i-1]
+    experimentacao_cdeepso(
+        function=schwefel, 
+        dimension=n, 
+        swarm_size=n, 
+        lower_bound=-500, 
+        upper_bound=500, 
+        wi = 0.7115679640086889, 
+        wa = 0.33431498083767774, 
+        wc = 0.6519128879895824, 
+        tcom= 0.5272319474395429, 
+        tmut= 0.7980253597223532,  
+        max_v=1.01,
+        max_fun_evals=100_000,
+        max_iter=None)

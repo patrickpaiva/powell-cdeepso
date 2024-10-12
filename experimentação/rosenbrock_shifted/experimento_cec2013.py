@@ -10,12 +10,12 @@ import pandas as pd
 from utils import calculate_statistics
 from powell_cdeepso import c_deepso_powell_global_best_com_kmeans_v4, c_deepso
 
-dimensions = [30, 50, 100]
+dimensions = [1000]
 
 def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bound, dispersion_tol, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter):
     results = []
 
-    for _ in tqdm(range(30), desc="Executando...", unit="iter"):
+    for _ in tqdm(range(25), desc="Executando...", unit="iter"):
         best_fitness, g_best, _, _, _, function_evals = c_deepso_powell_global_best_com_kmeans_v4(function, dimension, swarm_size, lower_bound, upper_bound, dispersion_tol, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results.append({
             'best_fitness': best_fitness,
@@ -48,29 +48,29 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
         df_results.to_excel(writer, sheet_name='Dados', index=False)
         df_stats.to_excel(writer, sheet_name='Estatisticas', index=False)
 
-for i in range(len(dimensions)):
-    n = dimensions[i-1]    
-    experimentacao_powell(
-            function=shifted_rosenbrock, 
-            dimension=n, 
-            swarm_size=n, 
-            lower_bound=-100, 
-            upper_bound=100,
-            dispersion_tol = 1e-4,
-            wi = 0.08213734020913432, 
-            wa = 0.5016145205887836, 
-            wc = 0.9484478878680539, 
-            tcom= 0.8307913864953265, 
-            tmut= 0.3285196359675192, 
-            max_v=1.01,
-            max_fun_evals=100_000,
-            max_iter=None)
+# for i in range(len(dimensions)):
+#     n = dimensions[i-1]    
+#     experimentacao_powell(
+#             function=shifted_rosenbrock, 
+#             dimension=n, 
+#             swarm_size=n, 
+#             lower_bound=-100, 
+#             upper_bound=100,
+#             dispersion_tol = 1e-4,
+#             wi = 0.08213734020913432, 
+#             wa = 0.5016145205887836, 
+#             wc = 0.9484478878680539, 
+#             tcom= 0.8307913864953265, 
+#             tmut= 0.3285196359675192, 
+#             max_v=1.01,
+#             max_fun_evals=3_000_000,
+#             max_iter=None)
 
 
 def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_bound, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter):
     results = []
 
-    for _ in tqdm(range(30), desc="Executando...", unit="iter"):
+    for _ in tqdm(range(25), desc="Executando...", unit="iter"):
         best_fitness, g_best, _, _, _, function_evals = c_deepso(function, dimension, swarm_size, lower_bound, upper_bound, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results.append({
             'best_fitness': best_fitness,
@@ -105,19 +105,19 @@ def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_b
         df_stats.to_excel(writer, sheet_name='Estatisticas', index=False)
     
 
-# for i in range(len(dimensions)):
-#     n = dimensions[i-1]
-#     experimentacao_cdeepso(
-#         function=shifted_rosenbrock, 
-#         dimension=n, 
-#         swarm_size=n, 
-#         lower_bound=-100, 
-#         upper_bound=100, 
-#         wi = 0.08213734020913432, 
-#         wa = 0.5016145205887836, 
-#         wc = 0.9484478878680539, 
-#         tcom= 0.8307913864953265, 
-#         tmut= 0.3285196359675192,  
-#         max_v=1.01,
-#         max_fun_evals=100_000,
-#         max_iter=None)
+for i in range(len(dimensions)):
+    n = dimensions[i-1]
+    experimentacao_cdeepso(
+        function=shifted_rosenbrock, 
+        dimension=n, 
+        swarm_size=n, 
+        lower_bound=-100, 
+        upper_bound=100, 
+        wi = 0.08213734020913432, 
+        wa = 0.5016145205887836, 
+        wc = 0.9484478878680539, 
+        tcom= 0.8307913864953265, 
+        tmut= 0.3285196359675192,  
+        max_v=1.01,
+        max_fun_evals=3_000_000,
+        max_iter=None)

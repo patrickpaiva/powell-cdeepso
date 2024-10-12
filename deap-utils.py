@@ -1,16 +1,12 @@
 # Apoio para geração de pesos otimizados
 import numpy as np
-from powell_cdeepso import c_deepso_powell_global_best_com_kmeans
+from powell_cdeepso import c_deepso_powell_global_best_com_kmeans, c_deepso
 from deap import base, creator, tools, algorithms
 from functools import partial
-from functions import shifted_rosenbrock, schwefel_1_2
-
-def schwefel(particle):
-    dimension = len(particle)
-    return 418.9829 * dimension - np.sum(particle * np.sin(np.sqrt(np.abs(particle))))
+from functions import shifted_rosenbrock, schwefel_1_2, griewank, shifted_ackley
 
 def deap_func(particle):
-  return schwefel_1_2(particle)
+  return shifted_ackley(particle)
 
 # Função objetivo para o DEEPSO com pesos otimizados
 def evaluate_weights(weights, function, dimension, swarmSize, lowerBound, upperBound, max_iter=100):
@@ -19,7 +15,7 @@ def evaluate_weights(weights, function, dimension, swarmSize, lowerBound, upperB
     types = ['sgpb', 'sg', 'pb']
     type_val = types[int(round(type_idx * 2))]
 
-    best_fitness, _, _, _, _, _ = c_deepso_powell_global_best_com_kmeans(function, dimension, swarmSize, lowerBound, upperBound, max_iter, max_fun_evals=None, W_i=W_i, W_a=W_a, W_c=W_c, T_com=T_com, T_mut=T_mut, type=type_val)
+    best_fitness, _, _, _, _, _ = c_deepso(function, dimension, swarmSize, lowerBound, upperBound, max_iter, max_fun_evals=None, W_i=W_i, W_a=W_a, W_c=W_c, T_com=T_com, T_mut=T_mut, type=type_val)
 
     return best_fitness,
 
@@ -49,7 +45,7 @@ def main():
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     toolbox.register("evaluate", partial(evaluate_weights, function=deap_func, dimension=30,
-                                        swarmSize=30, lowerBound=-100, upperBound=100))
+                                        swarmSize=30, lowerBound=-32, upperBound=32))
     #toolbox.register("mate", tools.cxBlend, alpha=0.5)
     #toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
 

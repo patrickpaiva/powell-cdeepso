@@ -36,9 +36,9 @@ def powell(function, x0, bounds, max_fun_evals, get_function_evals, tol=1e-4, ma
                 delta = decrease
                 biggest_decrease_index = i
 
-        bnd = ftol * (np.abs(f_old) + np.abs(f_ret)) + 1e-20
-        if 2.0 * (f_old - f_ret) <= bnd:
-            break
+        # bnd = ftol * (np.abs(f_old) + np.abs(f_ret)) + 1e-20
+        # if 2.0 * (f_old - f_ret) <= bnd:
+        #     break
         function_evals = get_function_evals()
         if max_fun_evals is not None and function_evals >= max_fun_evals:
             break
@@ -48,6 +48,8 @@ def powell(function, x0, bounds, max_fun_evals, get_function_evals, tol=1e-4, ma
             break
 
         new_direction = x - x_old
+        if np.all(new_direction == 0):
+            break
         _,lmax = _line_for_search(x, new_direction, lower_bound_array, upper_bound_array)
         x_extrapolated = x + min(lmax,1) * new_direction
         f_ext = function(x_extrapolated)
