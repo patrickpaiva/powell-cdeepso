@@ -13,11 +13,11 @@ from cec2013lsgo.cec2013 import Benchmark
 
 bench = Benchmark()
 
-def rosenbrock_shifted(sol):
-    fun_fitness = bench.get_function(12)
+def rastrigin_shifted(sol):
+    fun_fitness = bench.get_function(2)
     return fun_fitness(sol)
 
-dimension = bench.get_info(12)['dimension']
+dimension = bench.get_info(2)['dimension']
 
 def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment, percent_powell_func_evals, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter):
     results = []
@@ -68,18 +68,18 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
 
   
 experimentacao_powell(
-        function=rosenbrock_shifted, 
+        function=rastrigin_shifted, 
         dimension=1000, 
         swarm_size=500, 
-        lower_bound=-100, 
-        upper_bound=100,
+        lower_bound=-5, 
+        upper_bound=5,
         percent_powell_start_moment=0.5,
-        percent_powell_func_evals=0.05,
-        wi = 0.4019092098808389, 
-        wa = 0.3791940368874607, 
-        wc = 0.7539312405916303, 
-        tcom= 0.5819630448962767, 
-        tmut= 0.3, 
+        percent_powell_func_evals=0.1,
+        wi = 0.5222947486984788, 
+        wa = 0.7696602940023987, 
+        wc = 0.5645242118929356, 
+        tcom= 0.7974737271677088, 
+        tmut= 0.8265299136203416, 
         max_v=1.01,
         max_fun_evals=120_000,
         max_iter=None)
@@ -107,13 +107,12 @@ def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_b
     df_results = df_results.sort_values(by='best_fitness', ascending=True)
 
     function_evals_mean = np.mean(fun_evals)
-    minimum, maximum, mean, std_dev, median = calculate_statistics(best_fitnesses)
+    minimum, maximum, mean, std_dev = calculate_statistics(best_fitnesses)
 
     statistics = [{
         'Minimo': minimum,
         'Maximo': maximum,
         'Media': mean,
-        'Mediana': median,
         'Desvio_Padrao': std_dev,
         'Aval_Func_Media': function_evals_mean
     }]
@@ -129,18 +128,19 @@ def experimentacao_cdeepso(function, dimension, swarm_size, lower_bound, upper_b
         df_stats.to_excel(writer, sheet_name='Estatisticas', index=False)
         df_global_best_mean.to_excel(writer, sheet_name='Convergencia_Media', index=False)
 
-   
-experimentacao_cdeepso(
-        function=rosenbrock_shifted, 
-        dimension=1000, 
-        swarm_size=500, 
-        lower_bound=-100, 
-        upper_bound=100, 
-        wi = 0.4019092098808389, 
-        wa = 0.3791940368874607, 
-        wc = 0.7539312405916303, 
-        tcom= 0.5819630448962767, 
-        tmut= 0.3, 
-        max_v=1.01,
-        max_fun_evals=120_000,
-        max_iter=None)
+# for i in range(len(dimensions)):
+#     n = dimensions[i-1]    
+#     experimentacao_cdeepso(
+#             function=rosen, 
+#             dimension=n, 
+#             swarm_size=n, 
+#             lower_bound=-2.048, 
+#             upper_bound=2.048, 
+#             wi = 0.4019092098808389, 
+#             wa = 0.3791940368874607, 
+#             wc = 0.7539312405916303, 
+#             tcom= 0.5819630448962767, 
+#             tmut= 0.3, 
+#             max_v=1.01,
+#             max_fun_evals=100_000,
+#             max_iter=None)

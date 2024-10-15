@@ -28,7 +28,8 @@ def calculate_statistics(results):
     maximum = np.max(results)
     mean = np.mean(results)
     std_dev = np.std(results)
-    return minimum, maximum, mean, std_dev
+    median = np.median(results)
+    return minimum, maximum, mean, std_dev, median
 
 def perform_t_test(results_PCDEEPSO, results_CDEEPSO, alpha=0.05):
     t_stat, p_value = ttest_ind(results_PCDEEPSO, results_CDEEPSO, equal_var=False)

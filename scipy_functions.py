@@ -60,30 +60,30 @@ def _minimize_scalar_bounded(func, bounds, global_max_fun, get_global_fun_calls,
 
     while (np.abs(xf - xm) > (tol2 - 0.5 * (b - a))):
         golden = 1
-        # Verifica ajuste parabólico
-        if np.abs(e) > tol1:
-            golden = 0
-            r = (xf - nfc) * (fx - ffulc)
-            q = (xf - fulc) * (fx - fnfc)
-            p = (xf - fulc) * q - (xf - nfc) * r
-            q = 2.0 * (q - r)
-            if q > 0.0:
-                p = -p
-            q = np.abs(q)
-            r = e
-            e = rat
+        # # Verifica ajuste parabólico
+        # if np.abs(e) > tol1:
+        #     golden = 0
+        #     r = (xf - nfc) * (fx - ffulc)
+        #     q = (xf - fulc) * (fx - fnfc)
+        #     p = (xf - fulc) * q - (xf - nfc) * r
+        #     q = 2.0 * (q - r)
+        #     if q > 0.0:
+        #         p = -p
+        #     q = np.abs(q)
+        #     r = e
+        #     e = rat
 
-            # Verifica aceitabilidade da parábola
-            if ((np.abs(p) < np.abs(0.5*q*r)) and (p > q*(a - xf)) and
-                    (p < q * (b - xf))):
-                rat = (p + 0.0) / q
-                x = xf + rat
-                step = '       parabolic'
-                if ((x - a) < tol2) or ((b - x) < tol2):
-                    si = np.sign(xm - xf) + ((xm - xf) == 0)
-                    rat = tol1 * si
-            else:
-                golden = 1
+        #     # Verifica aceitabilidade da parábola
+        #     if ((np.abs(p) < np.abs(0.5*q*r)) and (p > q*(a - xf)) and
+        #             (p < q * (b - xf))):
+        #         rat = (p + 0.0) / q
+        #         x = xf + rat
+        #         step = '       parabolic'
+        #         if ((x - a) < tol2) or ((b - x) < tol2):
+        #             si = np.sign(xm - xf) + ((xm - xf) == 0)
+        #             rat = tol1 * si
+        #     else:
+        #         golden = 1
 
         if golden:
             if xf >= xm:

@@ -20,3 +20,4 @@ global_best = ast.literal_eval(global_best)
 valor = rosen(global_best)
 
 print(f"Prova do Fitness: {valor}")
+
