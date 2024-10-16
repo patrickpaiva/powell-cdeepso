@@ -976,6 +976,8 @@ def c_deepso_powell_global_best(function, dimension, swarmSize, lowerBound, uppe
     powell_func_evals = int(max_fun_evals * percent_powell_func_evals) if max_fun_evals is not None else None
     powell_start_func_evals = int(max_fun_evals*percent_powell_start_moment) if max_fun_evals is not None else None
     powell_stop_func_evals = int(powell_start_func_evals + powell_func_evals) if max_fun_evals is not None else None
+    g_best_fitness_120k_evals = None
+    g_best_fitness_600k_evals = None
 
     if max_iter is None and max_fun_evals is None:
         max_iter = 100
@@ -989,12 +991,17 @@ def c_deepso_powell_global_best(function, dimension, swarmSize, lowerBound, uppe
         nonlocal max_iter
         nonlocal g_best_fitness
         nonlocal g_best_fitness_list
+        nonlocal g_best_fitness_120k_evals, g_best_fitness_600k_evals
         result = function(particle)
         function_evals += 1
         if result < g_best_fitness:
             g_best_fitness_list.append(result)
         else:
             g_best_fitness_list.append(g_best_fitness)
+        if function_evals == 120_000:
+            g_best_fitness_120k_evals = g_best_fitness
+        if function_evals == 600_000:
+            g_best_fitness_600k_evals = g_best_fitness
         if function_evals >= max_fun_evals:
             raise MaxFunEvalsReached
         return result
@@ -1106,8 +1113,8 @@ def c_deepso_powell_global_best(function, dimension, swarmSize, lowerBound, uppe
 
             if max_iter is not None:
                 g_best_fitness_list.append(g_best_fitness)
-            positions.append(swarm.copy())
-            velocities.append(velocity.copy())
+            # positions.append(swarm.copy())
+            # velocities.append(velocity.copy())
             k += 1
 
             if max_iter is not None and max_iter == k:
@@ -1119,7 +1126,7 @@ def c_deepso_powell_global_best(function, dimension, swarmSize, lowerBound, uppe
         except MaxFunEvalsReached:
             return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals
 
-    return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals
+    return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals
 
 class MaxFunEvalsReached(Exception):
     pass

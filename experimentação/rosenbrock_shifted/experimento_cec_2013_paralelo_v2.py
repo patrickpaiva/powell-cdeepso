@@ -24,7 +24,7 @@ dimension = bench.get_info(12)['dimension']
 # Função individual para executar c_deepso_powell_global_best
 def executar_experimento(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment, percent_powell_func_evals, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter):
     try:
-        best_fitness, g_best, g_best_list, _, _, function_evals = c_deepso_powell_global_best(
+        best_fitness, g_best, g_best_list, _, _, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals = c_deepso_powell_global_best(
             function, dimension, swarm_size, lower_bound, upper_bound,
             percent_powell_start_moment=percent_powell_start_moment,
             percent_powell_func_evals=percent_powell_func_evals,
@@ -37,7 +37,9 @@ def executar_experimento(function, dimension, swarm_size, lower_bound, upper_bou
             'best_fitness': best_fitness,
             'global_best': g_best,
             'function_evals': function_evals,
-            'global_best_list': g_best_list
+            'global_best_list': g_best_list,
+            'g_best_fitness_120k_evals': g_best_fitness_120k_evals,
+            'g_best_fitness_600k_evals': g_best_fitness_600k_evals
         }
     except Exception as e:
         print(f"Erro na execução do experimento: {e}")
@@ -49,7 +51,7 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
     global_best_data = []
 
     # Use ProcessPoolExecutor para paralelismo em múltiplos processos
-    max_processes = 4  # Ajuste para o número de núcleos que você deseja usar
+    max_processes = 3  # Ajuste para o número de núcleos que você deseja usar
 
     with ProcessPoolExecutor(max_workers=max_processes) as executor:
         futures = [
@@ -64,13 +66,17 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
                 results.append({
                     'best_fitness': result['best_fitness'],
                     'global_best': result['global_best'],
-                    'function_evals': result['function_evals']
+                    'function_evals': result['function_evals'],
+                    'g_best_fitness_120k_evals': result['g_best_fitness_120k_evals'],
+                    'g_best_fitness_600k_evals': result['g_best_fitness_600k_evals']
                 })
                 global_best_data.append(result['global_best_list'])
                 pbar.update(1)
 
     # Calcula as estatísticas e salva na planilha
     best_fitnesses = [res['best_fitness'] for res in results]
+    best_fitnesses_120k_evals = [res['g_best_fitness_120k_evals'] for res in results if res['g_best_fitness_120k_evals'] is not None]
+    best_fitnesses_600k_evals = [res['g_best_fitness_600k_evals'] for res in results if res['g_best_fitness_600k_evals'] is not None]
     fun_evals = [res['function_evals'] for res in results]
 
     for result in results:
@@ -81,6 +87,8 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
 
     function_evals_mean = np.mean(fun_evals)
     minimum, maximum, mean, std_dev, median = calculate_statistics(best_fitnesses)
+    minimum_120k, maximum_120k, mean_120k, std_dev_120k, median_120k = calculate_statistics(best_fitnesses_120k_evals)
+    minimum_600k, maximum_600k, mean_600k, std_dev_600k, median_600k = calculate_statistics(best_fitnesses_600k_evals)
 
     statistics = [{
         'Minimo': minimum,
@@ -92,6 +100,24 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
     }]
     df_stats = pd.DataFrame(statistics)
 
+    statistics_120k = [{
+        'Minimo': minimum_120k,
+        'Maximo': maximum_120k,
+        'Media': mean_120k,
+        'Mediana': median_120k,
+        'Desvio_Padrao': std_dev_120k
+    }]
+    df_stats_120k = pd.DataFrame(statistics_120k)
+
+    statistics_600k = [{
+        'Minimo': minimum_600k,
+        'Maximo': maximum_600k,
+        'Media': mean_600k,
+        'Mediana': median_600k,
+        'Desvio_Padrao': std_dev_600k
+    }]
+    df_stats_600k = pd.DataFrame(statistics_600k)
+
     global_best_array = np.array(global_best_data)
     global_best_mean = np.mean(global_best_array, axis=0)
     df_global_best_mean = pd.DataFrame(global_best_mean, columns=['Convergencia_Media'])
@@ -101,6 +127,8 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
     with pd.ExcelWriter(nome_arquivo, engine='openpyxl') as writer:
         df_results.to_excel(writer, sheet_name='Dados', index=False)
         df_stats.to_excel(writer, sheet_name='Estatisticas', index=False)
+        df_stats_120k.to_excel(writer, sheet_name='Estatisticas_120k', index=False)
+        df_stats_600k.to_excel(writer, sheet_name='Estatisticas_600k', index=False)
         df_global_best_mean.to_excel(writer, sheet_name='Convergencia_Media', index=False)
 
 if __name__ == "__main__":
@@ -118,6 +146,6 @@ if __name__ == "__main__":
         tcom=0.5819630448962767,
         tmut=0.3,
         max_v=1.01,
-        max_fun_evals=120_000,
+        max_fun_evals=3_000_000,
         max_iter=None
     )
