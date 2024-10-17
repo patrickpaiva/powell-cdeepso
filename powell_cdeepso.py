@@ -1283,7 +1283,14 @@ def c_deepso_powell_global_best_paralelo(function, dimension, swarmSize, lowerBo
             C = np.random.choice([0, 1], size=dimension, p=[1-T_com, T_com])
             # Equação de movimento nas matrizes
             #V = np.clip(wm*V + c1m*(Xst - X) + c2m*C*(gbestm_X - X), -diff, diff)
-            velocity = np.clip(W_i * velocity + W_a * (X_st - swarm) + W_c * C * (selected_global_best - swarm), -max_v, max_v)
+            # inertia = W_i * velocity[i]
+            # cognitive = W_a * (X_st - particle)
+            # social = W_c * (C @ (selected_global_best - particle))
+            # inertia = np.multiply(W_i * velocity)
+            # cognitive = np.multiply(W_a, np.subtract(X_st, swarm))
+            # social = np.multiply(W_c, np.multiply(C, np.subtract(selected_global_best, swarm)))
+            velocity = np.clip(np.add(np.multiply(W_i, velocity), np.add(np.multiply(W_a, np.subtract(X_st, swarm)), np.multiply(W_c, np.multiply(C, np.subtract(selected_global_best, swarm))))), -max_v, max_v)
+            # velocity = np.clip(W_i * velocity + W_a * (X_st - swarm) + W_c * C * (selected_global_best - swarm), -max_v, max_v)
             swarm = np.clip(swarm + velocity, lowerBound, upperBound)
 
             evaluate_population(swarm)
