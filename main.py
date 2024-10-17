@@ -1,4 +1,4 @@
-from powell_cdeepso import c_deepso, c_deepso_powell_global_best
+from powell_cdeepso import c_deepso, c_deepso_powell_global_best, c_deepso_powell_global_best_paralelo
 from utils import calculate_statistics, print_statistics, perform_t_test
 from scipy.optimize import rosen
 import numpy as np
@@ -12,13 +12,19 @@ def function_cec2013(sol, dim):
     fun_fitness = bench.get_function(12)
     return fun_fitness(sol)
 
+def function_ambigua(sol):
+    fun_fitness = rosen
+    if sol.ndim == 2:
+        return np.apply_along_axis(fun_fitness, 1, sol)
+    elif sol.ndim == 1:
+        return fun_fitness(sol)
 
 def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter, percent_powell_start_moment, percent_powell_func_evals):
     results_PCDEEPSO = []
     results_CDEEPSO = []
 
-    for _ in tqdm(range(20), desc="Executando...", unit="iter"):
-        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO = c_deepso_powell_global_best(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment=percent_powell_start_moment, percent_powell_func_evals=percent_powell_func_evals, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
+    for _ in tqdm(range(10), desc="Executando...", unit="iter"):
+        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO, _, _ = c_deepso_powell_global_best(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment=percent_powell_start_moment, percent_powell_func_evals=percent_powell_func_evals, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results_PCDEEPSO.append({
             'best_fitness': best_fitness_PCDEEPSO,
             'global_best': g_best_PCDEEPSO,
@@ -55,8 +61,8 @@ def main():
     print("Iniciando...")
     experimentacao(
             function=rosen, 
-            dimension=500, 
-            swarm_size=250, 
+            dimension=100, 
+            swarm_size=100, 
             lower_bound=-2.048, 
             upper_bound=2.048,
             percent_powell_start_moment=0.5,
@@ -67,7 +73,7 @@ def main():
             tcom= 0.5819630448962767, 
             tmut= 0.3, 
             max_v=1.01,
-            max_fun_evals=100_000,
+            max_fun_evals=120_000,
             max_iter=None)
 
     fim = time.time()

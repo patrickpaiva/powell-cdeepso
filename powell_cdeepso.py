@@ -1124,9 +1124,218 @@ def c_deepso_powell_global_best(function, dimension, swarmSize, lowerBound, uppe
                 break
         
         except MaxFunEvalsReached:
-            return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals
+            return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals
 
     return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals
+
+def c_deepso_powell_global_best_paralelo(function, dimension, swarmSize, lowerBound, upperBound,
+             percent_powell_start_moment = 0.5,
+             percent_powell_func_evals = 0.15,
+             max_iter=None,
+             max_fun_evals=None,
+             W_i=0.4019092098808389,
+             W_a=0.3791940368874607,
+             W_c=0.7539312405916303,
+             max_v=1.01,
+             T_com=0.5819630448962767,
+             T_mut=0.1,
+             type='sgpb',
+             F=0.5):
+    k = 0
+    swarm = generatePopulation(dimension, swarmSize, lowerBound, upperBound)
+    velocity = np.zeros((swarmSize, dimension))
+    g_best_fitness_list = []
+    fitness_list = []
+    velocities = []
+    positions = []
+    function_evals = 0
+    powell_func_evals = int(max_fun_evals * percent_powell_func_evals) if max_fun_evals is not None else None
+    powell_start_func_evals = int(max_fun_evals*percent_powell_start_moment) if max_fun_evals is not None else None
+    powell_stop_func_evals = int(powell_start_func_evals + powell_func_evals) if max_fun_evals is not None else None
+    g_best_fitness_120k_evals = None
+    g_best_fitness_600k_evals = None
+
+    if max_iter is None and max_fun_evals is None:
+        max_iter = 100
+    
+    def get_function_evals():
+        nonlocal function_evals
+        return function_evals
+    
+    def evaluate_function(particle):
+        nonlocal function_evals
+        nonlocal max_iter
+        nonlocal g_best_fitness, g_best
+        nonlocal g_best_fitness_list
+        nonlocal g_best_fitness_120k_evals, g_best_fitness_600k_evals
+        result = function(particle)
+        function_evals += 1
+        if result < g_best_fitness:
+            g_best_fitness_list.append(result)
+        else:
+            g_best_fitness_list.append(g_best_fitness)
+        if function_evals == 120_000:
+            g_best_fitness_120k_evals = g_best_fitness
+        if function_evals == 600_000:
+            g_best_fitness_600k_evals = g_best_fitness
+        if function_evals >= max_fun_evals:
+            if result < g_best_fitness:
+                g_best_fitness = result
+                g_best = particle
+            raise MaxFunEvalsReached
+        return result
+    
+    def evaluate_population(swarm):
+        nonlocal function_evals
+        nonlocal fitness_list
+        nonlocal g_best_fitness
+        nonlocal g_best
+        remaining_evals = max_fun_evals - function_evals
+
+        if remaining_evals < swarmSize:
+            fitness_list = function(swarm[:remaining_evals])
+            function_evals += remaining_evals
+        else:
+            fitness_list = function(swarm)
+            function_evals += swarmSize
+        g_best_fitness_list.extend(fitness_list)
+        if function_evals >= max_fun_evals:
+            candidate_g_best_index = np.argmin(fitness_list)
+            candidate_g_best_fitness = fitness_list[candidate_g_best_index]
+            if candidate_g_best_fitness < g_best_fitness:
+                g_best_fitness = candidate_g_best_fitness
+                g_best = swarm[candidate_g_best_index]
+            raise MaxFunEvalsReached
+
+    evaluate_population(swarm)
+    g_best_index = np.argmin(fitness_list)
+    g_best = swarm[g_best_index]
+    g_best_fitness = fitness_list[g_best_index]    
+
+    # Inicializa a lista ordenada para as 10% melhores partículas
+    num_top_particles = max(1, swarmSize // 10)
+
+    def get_top_10_percent_particles(swarm, fitness_list, num_top_particles):
+        sorted_indices = np.argsort(fitness_list)
+        top_indices = sorted_indices[:num_top_particles]
+        return swarm[top_indices]
+
+    while True:
+        try:
+            
+            # Mutação dos pesos
+            W_i = np.clip(W_i + (T_mut * np.random.normal(0, 1)), 0, 1)
+            W_a = np.clip(W_a + (T_mut * np.random.normal(0, 1)), 0, 1)
+            W_c = np.clip(W_c + (T_mut * np.random.normal(0, 1)), 0, 1)
+
+            # # Atualiza Particle Best e Global Best
+            # particle = swarm[i]
+            # fitness = evaluate_function(particle)
+
+            # if fitness < p_best_fitness[i]:
+            #     p_best[i] = particle.copy()
+            #     p_best_fitness[i] = fitness
+            #     if fitness < g_best_fitness:
+            #         g_best = particle.copy()
+            #         g_best_fitness = fitness
+            #         g_best_fitness_list[-1] = g_best_fitness
+
+            # Gera Matriz de Comunicação
+            # C = generateMultiplicationMatrix(dimension, T_com)
+
+            # Extrai Xr conforme o tipo selecionado
+            Xr = None
+            top_particles = get_top_10_percent_particles(swarm, fitness_list, num_top_particles)
+
+            r = np.random.randint(0, swarmSize)
+
+            if type == 'sg':  # Extraído aleatoriamente da população atual
+                Xr = swarm[r]
+            elif type == 'pb':  # Extraído aleatoriamente dentre os 10% melhores salvos
+                Xr = top_particles[np.random.randint(num_top_particles)]
+            elif type == 'sgpb':  # Média entre Sg e Pb
+                pb = top_particles[np.random.randint(num_top_particles)]
+                Xr = ((swarm[r] + pb) / 2)
+            else:
+                return "Tipo inválido. Aceitos: sg, pb e sgpb."
+
+            # if evaluate_function(Xr) > fitness:  # Fica com Xr apenas se o fitness dele for menor que o da minha partícula corrente
+            #     Xr = particle
+
+            # Realiza possível mutação do global best
+            selected_global_best = g_best
+            mutated_global_best = np.clip(g_best * (1 + T_mut * np.random.normal(0, 1)), lowerBound, upperBound)
+            if evaluate_function(mutated_global_best) < g_best_fitness:
+                selected_global_best = mutated_global_best
+
+            # Implementa a estratégia current-to-best para o Xst
+            # r1, r2 = np.random.randint(0, swarmSize), np.random.randint(0, swarmSize)
+            # while r1 == i:
+            #     r1 = np.random.randint(0, swarmSize)
+            # while r2 == i or r2 == r1:
+            #     r2 = np.random.randint(0, swarmSize)
+
+            # X_best = g_best.copy()
+            # X_r1 = swarm[r1].copy()
+            # X_r2 = swarm[r2].copy()
+
+            X_st = Xr + F * (g_best - Xr)
+            C = np.random.choice([0, 1], size=dimension, p=[1-T_com, T_com])
+            # Equação de movimento nas matrizes
+            #V = np.clip(wm*V + c1m*(Xst - X) + c2m*C*(gbestm_X - X), -diff, diff)
+            velocity = np.clip(W_i * velocity + W_a * (X_st - swarm) + W_c * C * (selected_global_best - swarm), -max_v, max_v)
+            swarm = np.clip(swarm + velocity, lowerBound, upperBound)
+
+            evaluate_population(swarm)
+
+            candidate_g_best_index = np.argmin(fitness_list)
+            candidate_g_best_fitness = fitness_list[candidate_g_best_index]
+            if candidate_g_best_fitness < g_best_fitness:
+                g_best_fitness = candidate_g_best_fitness
+                g_best = swarm[candidate_g_best_index]
+                g_best_index = candidate_g_best_index
+
+            # print(f"Geração: {k} funcalls: {function_evals} powell_start: {powell_start_func_evals} powell_stop: {powell_stop_func_evals}")
+            if max_fun_evals is not None and (function_evals >= powell_start_func_evals and function_evals <= powell_stop_func_evals):
+                # print(f"Aconteceu na iteracao {k} com {function_evals} fun evals")
+                result = powell(evaluate_function, g_best, (lowerBound, upperBound), powell_stop_func_evals, get_function_evals)
+                candidate = result.copy()
+                candidate_fitness = evaluate_function(candidate)
+                if candidate_fitness < g_best_fitness:
+                    g_best = candidate.copy()
+                    g_best_fitness = candidate_fitness
+                    g_best_fitness_list[-1] = g_best_fitness
+                # print(f"Terminou com {function_evals} fun evals")
+                
+
+            # if max_iter is not None and k == max_iter//2:
+            #     result = powell(evaluate_function, g_best, (lowerBound, upperBound), max_fun_evals, get_function_evals)
+            #     candidate = result.copy()
+            #     candidate_fitness = evaluate_function(candidate)
+            #     if candidate_fitness < g_best_fitness:
+            #         g_best = candidate.copy()
+            #         g_best_fitness = candidate_fitness
+            #         g_best_fitness_list.append(g_best_fitness)
+            #     break
+
+            # if max_iter is not None:
+            #     g_best_fitness_list.append(g_best_fitness)
+            # positions.append(swarm.copy())
+            # velocities.append(velocity.copy())
+            k += 1
+
+            if max_iter is not None and max_iter == k:
+                break
+            
+            if max_fun_evals is not None and max_fun_evals <= function_evals:
+                break
+        
+        except MaxFunEvalsReached:
+            return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals
+
+    return g_best_fitness, g_best, g_best_fitness_list, positions, velocities, function_evals, g_best_fitness_120k_evals, g_best_fitness_600k_evals
+
+
 
 class MaxFunEvalsReached(Exception):
     pass

@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 from utils import calculate_statistics
-from powell_cdeepso import c_deepso_powell_global_best
+from powell_cdeepso import c_deepso_powell_global_best_paralelo
 from cec2013lsgo.cec2013 import Benchmark
 
 bench = Benchmark()
@@ -21,9 +21,16 @@ def rosenbrock_shifted(sol):
 
 dimension = bench.get_info(12)['dimension']
 
+def function_ambigua(sol):
+    fun_fitness = rosenbrock_shifted
+    if sol.ndim == 2:
+        return np.apply_along_axis(fun_fitness, 1, sol)
+    elif sol.ndim == 1:
+        return fun_fitness(sol)
+
 # Função individual para executar c_deepso_powell_global_best
 def executar_experimento(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment, percent_powell_func_evals, wi, wa, wc, tcom, tmut, max_v, max_fun_evals, max_iter):
-    best_fitness, g_best, g_best_list, _, _, function_evals = c_deepso_powell_global_best(
+    best_fitness, g_best, g_best_list, _, _, function_evals = c_deepso_powell_global_best_paralelo(
         function, dimension, swarm_size, lower_bound, upper_bound,
         percent_powell_start_moment=percent_powell_start_moment,
         percent_powell_func_evals=percent_powell_func_evals,
@@ -97,7 +104,7 @@ def experimentacao_powell(function, dimension, swarm_size, lower_bound, upper_bo
 
 
 experimentacao_powell(
-    function=rosenbrock_shifted,
+    function=function_ambigua,
     dimension=1000,
     swarm_size=500,
     lower_bound=-100,
