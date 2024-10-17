@@ -24,7 +24,7 @@ def generate_graphics():
         convergencias = {algoritmo: [] for algoritmo in algoritmos}
 
         for algoritmo in algoritmos:
-            file_name = f'experimento_{function}_{dim}_dimensoes_{algoritmo}.xlsx'
+            file_name = f'experimento_{function}_{dim}_dimensoes_{algoritmo}_paralelo.xlsx'
             file_path = os.path.join(base_path, file_name)
             
             best_fitness = ler_dados_excel(file_path, sheet_name='Dados')
@@ -38,7 +38,7 @@ def generate_graphics():
         ax.boxplot([resultados['cdeepso'], resultados['pcdeepso']], labels=['cdeepso', 'powell_cdeepso'])
         ax.set_title(f'Rosenbrock {dim} dimensões')
         ax.set_ylabel('Best Fitness')
-        output_file = os.path.join(base_path, f'boxplot_comparacao_{dim}.png')
+        output_file = os.path.join(base_path, f'boxplot_comparacao_{dim}_paralelo.png')
         plt.savefig(output_file)
         plt.show()
 
@@ -58,7 +58,7 @@ def generate_graphics():
         ax.set_yscale('log')
 
         ax.legend()
-        output_file = os.path.join(base_path, f'curva_convergencia_media_{dim}.png')
+        output_file = os.path.join(base_path, f'curva_convergencia_media_{dim}_paralelo.png')
         plt.savefig(output_file)
         plt.show()
 

@@ -5,12 +5,12 @@ import numpy as np
 import time
 from tqdm import tqdm
 from functions import shifted_rosenbrock, schwefel_1_2, schwefel, griewank, shifted_ackley
-from cec2013lsgo.cec2013 import Benchmark
+# from cec2013lsgo.cec2013 import Benchmark
 
-def function_cec2013(sol, dim):
-    bench = Benchmark()
-    fun_fitness = bench.get_function(12)
-    return fun_fitness(sol)
+# def function_cec2013(sol, dim):
+#     bench = Benchmark()
+#     fun_fitness = bench.get_function(12)
+#     return fun_fitness(sol)
 
 def function_ambigua(sol):
     fun_fitness = rosen
@@ -24,7 +24,7 @@ def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi
     results_CDEEPSO = []
 
     for _ in tqdm(range(10), desc="Executando...", unit="iter"):
-        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO, _, _ = c_deepso_powell_global_best(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment=percent_powell_start_moment, percent_powell_func_evals=percent_powell_func_evals, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
+        best_fitness_PCDEEPSO, g_best_PCDEEPSO, _, _, _, function_evals_PCDEEPSO, _, _ = c_deepso_powell_global_best_paralelo(function, dimension, swarm_size, lower_bound, upper_bound, percent_powell_start_moment=percent_powell_start_moment, percent_powell_func_evals=percent_powell_func_evals, max_iter=max_iter, max_fun_evals=max_fun_evals, type='pb', W_i=wi, W_a=wa, W_c=wc, T_mut=tmut, T_com=tcom, max_v=max_v)
         results_PCDEEPSO.append({
             'best_fitness': best_fitness_PCDEEPSO,
             'global_best': g_best_PCDEEPSO,
@@ -50,7 +50,8 @@ def experimentacao(function, dimension, swarm_size, lower_bound, upper_bound, wi
     perform_t_test(best_fitnesses_PCDEEPSO, best_fitnesses_CDEEPSO)
 
     # prova do fitness mínimo
-    indice_minimo = best_fitnesses_PCDEEPSO.index(PCDEEPSO_stats[0])
+    # indice_minimo = best_fitnesses_PCDEEPSO.index(PCDEEPSO_stats[0])
+    indice_minimo = np.argmin(best_fitness_PCDEEPSO)
     melhor_execucao = results_PCDEEPSO[indice_minimo]
     melhor_gb = melhor_execucao['global_best']
     teste = function(melhor_gb)
@@ -61,12 +62,12 @@ def main():
     print("Iniciando...")
     experimentacao(
             function=rosen, 
-            dimension=100, 
-            swarm_size=100, 
+            dimension=30, 
+            swarm_size=30, 
             lower_bound=-2.048, 
             upper_bound=2.048,
             percent_powell_start_moment=0.5,
-            percent_powell_func_evals=0.05,
+            percent_powell_func_evals=0.15,
             wi = 0.4019092098808389, 
             wa = 0.3791940368874607, 
             wc = 0.7539312405916303, 
